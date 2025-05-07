@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	handler "github.com/juancanchi/products/internal/delivery/http"
+	"github.com/juancanchi/products/internal/delivery/http/middleware"
 	"github.com/juancanchi/products/internal/infrastructure/postgres"
 	"github.com/juancanchi/products/internal/usecase"
 )
@@ -18,9 +19,6 @@ func main() {
 		log.Fatalf("Error al conectar a la base de datos: %v", err)
 	}
 
-	// Ejecutar migraciones
-	postgres.RunMigrations(db)
-
 	// Inyección de dependencias
 	repo := postgres.NewProductRepository(db)
 	usecase := usecase.NewProductUsecase(repo)
@@ -28,9 +26,18 @@ func main() {
 
 	// Inicializar router
 	r := gin.Default()
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "supersecreto"
+	}
 
-	// Rutas del microservicio
-	r.POST("/products", handler.Create)
+	auth := r.Group("/")
+	auth.Use(middleware.JWTMiddleware(jwtSecret))
+	auth.POST("/products", handler.Create)
+	auth.GET("/my-products", handler.ListByUser)
+	auth.PUT("/products/:id", handler.Update)
+	auth.DELETE("/products/:id", handler.Delete)
+
 	r.GET("/products", handler.List)
 
 	// Puerto
