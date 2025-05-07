@@ -2,7 +2,7 @@ package postgres
 
 import (
 	"context"
-	"github.com/juancanchi/jujuy-market/products/internal/domain"
+	"github.com/juancanchi/products/internal/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )

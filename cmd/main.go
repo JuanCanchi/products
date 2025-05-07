@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	handler "github.com/juancanchi/jujuy-market/products/internal/delivery/http"
-	"github.com/juancanchi/jujuy-market/products/internal/infrastructure/postgres"
-	"github.com/juancanchi/jujuy-market/products/internal/usecase"
+	handler "github.com/juancanchi/products/internal/delivery/http"
+	"github.com/juancanchi/products/internal/infrastructure/postgres"
+	"github.com/juancanchi/products/internal/usecase"
 )
 
 func main() {

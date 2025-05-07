@@ -1,8 +1,8 @@
 package http
 
 import (
-	"github.com/juancanchi/jujuy-market/products/internal/domain"
-	"github.com/juancanchi/jujuy-market/products/internal/usecase"
+	"github.com/juancanchi/products/internal/domain"
+	"github.com/juancanchi/products/internal/usecase"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

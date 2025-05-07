@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/juancanchi/jujuy-market/products/internal/domain"
+	"github.com/juancanchi/products/internal/domain"
 )
 
 type ProductRepository interface {
