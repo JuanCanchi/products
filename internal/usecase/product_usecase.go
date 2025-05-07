@@ -74,3 +74,7 @@ func (u *ProductUsecase) Delete(ctx context.Context, id string, userID string) e
 
 	return u.repo.Delete(ctx, id)
 }
+
+func (u *ProductUsecase) GetByID(ctx context.Context, id string) (*domain.Product, error) {
+	return u.repo.FindByID(ctx, id)
+}

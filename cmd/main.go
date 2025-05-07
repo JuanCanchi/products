@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/gin-contrib/cors"
 	"log"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	handler "github.com/juancanchi/products/internal/delivery/http"
@@ -31,10 +33,19 @@ func main() {
 		jwtSecret = "supersecreto"
 	}
 
+	r.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowMethods:     []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	auth := r.Group("/")
 	auth.Use(middleware.JWTMiddleware(jwtSecret))
 	auth.POST("/products", handler.Create)
 	auth.GET("/my-products", handler.ListByUser)
+	auth.GET("/products/:id", handler.GetByID)
 	auth.PUT("/products/:id", handler.Update)
 	auth.DELETE("/products/:id", handler.Delete)
 

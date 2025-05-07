@@ -113,3 +113,15 @@ func (h *ProductHandler) Delete(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
+func (h *ProductHandler) GetByID(c *gin.Context) {
+	id := c.Param("id")
+
+	product, err := h.usecase.GetByID(c.Request.Context(), id)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Producto no encontrado"})
+		return
+	}
+
+	c.JSON(http.StatusOK, product)
+}
