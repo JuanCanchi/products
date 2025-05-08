@@ -1,0 +1,25 @@
+# Archivos de sistema
+.DS_Store
+.idea/
+.vscode/
+
+# Git
+.git
+.gitignore
+
+# Builds locales
+bin/
+*.exe
+*.out
+*.test
+
+# Módulos y caché de Go
+vendor/
+*.log
+
+# Node (por si accidentalmente hay cosas web)
+node_modules/
+
+# Docker
+Dockerfile
+.dockerignore
