@@ -2,16 +2,15 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
+	"github.com/juancanchi/products/internal/delivery/http"
+	"github.com/juancanchi/products/internal/delivery/http/middleware"
+	"github.com/juancanchi/products/internal/infrastructure/postgres"
+	"github.com/juancanchi/products/internal/usecase"
 	"gorm.io/gorm"
 	"log"
 	"os"
 	"time"
-
-	"github.com/gin-gonic/gin"
-	handler "github.com/juancanchi/products/internal/delivery/http"
-	"github.com/juancanchi/products/internal/delivery/http/middleware"
-	"github.com/juancanchi/products/internal/infrastructure/postgres"
-	"github.com/juancanchi/products/internal/usecase"
 )
 
 func main() {
@@ -27,9 +26,13 @@ func main() {
 	}
 
 	// Inyección de dependencias
-	repo := postgres.NewProductRepository(db)
-	usecase := usecase.NewProductUsecase(repo)
-	handler := handler.NewProductHandler(usecase)
+	productRepo := postgres.NewProductRepository(db)
+	productUC := usecase.NewProductUsecase(productRepo)
+	productHandler := http.NewProductHandler(productUC)
+
+	categoryRepo := postgres.NewCategoryRepository(db)
+	categoryUC := usecase.NewCategoryUsecase(categoryRepo)
+	categoryHandler := http.NewCategoryHandler(categoryUC)
 
 	r := gin.Default()
 	jwtSecret := os.Getenv("JWT_SECRET")
@@ -37,6 +40,7 @@ func main() {
 		jwtSecret = "supersecreto"
 	}
 
+	// CORS
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:5173"},
 		AllowMethods:     []string{"POST", "GET", "PUT", "DELETE", "OPTIONS"},
@@ -45,16 +49,28 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}))
 
+	// Rutas públicas
+	r.GET("/products", productHandler.List)
+	r.GET("/categories", categoryHandler.List)
+
+	// Rutas autenticadas para usuarios
 	auth := r.Group("/")
 	auth.Use(middleware.JWTMiddleware(jwtSecret))
-	auth.POST("/products", handler.Create)
-	auth.GET("/my-products", handler.ListByUser)
-	auth.GET("/products/:id", handler.GetByID)
-	auth.PUT("/products/:id", handler.Update)
-	auth.DELETE("/products/:id", handler.Delete)
+	auth.POST("/products", productHandler.Create)
+	auth.GET("/my-products", productHandler.ListByUser)
+	auth.GET("/products/:id", productHandler.GetByID)
+	auth.PUT("/products/:id", productHandler.Update)
+	auth.DELETE("/products/:id", productHandler.Delete)
 
-	r.GET("/products", handler.List)
+	// Rutas solo para admin
+	admin := r.Group("/")
+	admin.Use(middleware.JWTMiddleware(jwtSecret), middleware.AdminOnly())
+	admin.PUT("/products/:id/status", productHandler.ChangeStatus)
+	admin.POST("/categories", categoryHandler.Create)
+	admin.PUT("/categories/:id", categoryHandler.Update)
+	admin.DELETE("/categories/:id", categoryHandler.Delete)
 
+	// Puerto
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"

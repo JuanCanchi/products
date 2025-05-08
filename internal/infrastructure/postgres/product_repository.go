@@ -54,6 +54,12 @@ func (r *ProductRepository) Delete(ctx context.Context, id string) error {
 	return r.db.WithContext(ctx).Delete(&domain.Product{}, "id = ?", id).Error
 }
 
+func (r *ProductRepository) UpdateStatus(ctx context.Context, id string, status string) error {
+	return r.db.WithContext(ctx).Model(&domain.Product{}).
+		Where("id = ?", id).
+		Update("status", status).Error
+}
+
 // Conexión a PostgreSQL usando GORM
 func NewDB(dsn string) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})

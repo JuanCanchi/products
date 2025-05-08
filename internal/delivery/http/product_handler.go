@@ -29,6 +29,7 @@ func (h *ProductHandler) Create(c *gin.Context) {
 		return
 	}
 	p.UserID = userID.(string)
+	p.Status = "PENDING"
 
 	if err := h.usecase.Create(c.Request.Context(), &p); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -80,6 +81,10 @@ func (h *ProductHandler) Update(c *gin.Context) {
 
 	p.ID = id // aseguramos que se use el ID de la URL
 
+	if p.CategoryID != nil && *p.CategoryID == "" {
+		p.CategoryID = nil
+	}
+
 	if err := h.usecase.Update(c.Request.Context(), &p, userID.(string)); err != nil {
 		if err.Error() == "no autorizado" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "no sos el dueño del producto"})
@@ -124,4 +129,31 @@ func (h *ProductHandler) GetByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, product)
+}
+
+func (h *ProductHandler) ChangeStatus(c *gin.Context) {
+	role, exists := c.Get("role")
+	if !exists || role != "ADMIN" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "no autorizado"})
+		return
+	}
+
+	id := c.Param("id")
+
+	var body struct {
+		Status string `json:"status"`
+	}
+
+	if err := c.ShouldBindJSON(&body); err != nil || body.Status == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "estado inválido"})
+		return
+	}
+
+	err := h.usecase.UpdateStatus(c.Request.Context(), id, body.Status)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "no se pudo actualizar el estado"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "estado actualizado"})
 }

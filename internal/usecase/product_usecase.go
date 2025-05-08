@@ -16,6 +16,7 @@ type ProductRepository interface {
 	FindByID(ctx context.Context, id string) (*domain.Product, error)
 	Update(ctx context.Context, p *domain.Product) error
 	Delete(ctx context.Context, id string) error
+	UpdateStatus(ctx context.Context, id string, status string) error
 }
 
 type ProductUsecase struct {
@@ -58,6 +59,7 @@ func (u *ProductUsecase) Update(ctx context.Context, p *domain.Product, userID s
 	existing.Description = p.Description
 	existing.Price = p.Price
 	existing.ImageURL = p.ImageURL
+	existing.CategoryID = p.CategoryID
 
 	return u.repo.Update(ctx, existing)
 }
@@ -77,4 +79,8 @@ func (u *ProductUsecase) Delete(ctx context.Context, id string, userID string) e
 
 func (u *ProductUsecase) GetByID(ctx context.Context, id string) (*domain.Product, error) {
 	return u.repo.FindByID(ctx, id)
+}
+
+func (uc *ProductUsecase) UpdateStatus(ctx context.Context, id string, status string) error {
+	return uc.repo.UpdateStatus(ctx, id, status)
 }

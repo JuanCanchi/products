@@ -43,8 +43,11 @@ func JWTMiddleware(secret string) gin.HandlerFunc {
 			return
 		}
 
-		// Guardamos el user_id en el contexto
+		role, _ := claims["role"].(string) // puede no existir, pero default será ""
+
 		c.Set("user_id", userID)
+		c.Set("role", role)
+
 		c.Next()
 	}
 }
