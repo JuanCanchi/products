@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
+	"gorm.io/gorm"
 	"log"
 	"os"
 	"time"
@@ -14,11 +15,15 @@ import (
 )
 
 func main() {
-	// Conexión a la base de datos
-	dsn := "host=localhost user=postgres password=postgres dbname=jujuy_market port=5432 sslmode=disable"
-	db, err := postgres.NewDB(dsn)
-	if err != nil {
-		log.Fatalf("Error al conectar a la base de datos: %v", err)
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "host=localhost user=postgres password=postgres dbname=jujuy_market port=5432 sslmode=disable"
+	}
+
+	var dbErr error
+	var db = tryConnectToDB(dsn, &dbErr)
+	if dbErr != nil {
+		log.Fatalf("❌ Error al conectar a la base de datos después de varios intentos: %v", dbErr)
 	}
 
 	// Inyección de dependencias
@@ -26,7 +31,6 @@ func main() {
 	usecase := usecase.NewProductUsecase(repo)
 	handler := handler.NewProductHandler(usecase)
 
-	// Inicializar router
 	r := gin.Default()
 	jwtSecret := os.Getenv("JWT_SECRET")
 	if jwtSecret == "" {
@@ -51,7 +55,6 @@ func main() {
 
 	r.GET("/products", handler.List)
 
-	// Puerto
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
@@ -59,4 +62,19 @@ func main() {
 
 	log.Printf("🚀 Servidor escuchando en http://localhost:%s", port)
 	r.Run(":" + port)
+}
+
+func tryConnectToDB(dsn string, lastErr *error) *gorm.DB {
+	const maxAttempts = 10
+	for i := 1; i <= maxAttempts; i++ {
+		log.Printf("⏳ Intentando conectar a la base de datos... intento %d/%d", i, maxAttempts)
+		db, err := postgres.NewDB(dsn)
+		if err == nil {
+			log.Println("✅ Conexión a la base de datos exitosa.")
+			return db
+		}
+		*lastErr = err
+		time.Sleep(3 * time.Second)
+	}
+	return nil
 }
